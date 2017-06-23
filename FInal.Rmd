@@ -1,0 +1,57 @@
+```{r}
+
+```
+# Project
+## Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+## Starting read our csvs.
+```{r}
+library('readr')
+library('caret')
+library('randomForest')
+test <- read_csv('~/Downloads/pml-testing.csv')
+train <- read_csv('~/Downloads/pml-training.csv')
+```
+```{r}
+set.seed(12345)
+```
+# Preprocessing
+## Eliminate rows with NA or DIV.0
+```{r}
+newTrain <- train[sapply(train, function(x) !any(is.na(x)))] 
+```
+
+## Eliminate times values.
+```{r}
+trainCorr<- newTrain[,-c(1:7)]
+```
+## Crossvalidate. Lets create two datasets training and validating
+```{r}
+inTrain <- createDataPartition(y=trainCorr$classe, p=0.75, list=FALSE)
+training <- trainCorr[inTrain,]
+validating <-trainCorr[-inTrain,]
+```
+## The choosen algorithm is RandomForest. Let's use bagging.
+```{r}
+mdlTrain <- train(classe ~ ., method='rf', data=training)
+```
+## Confusion Matrix of our algorithm. 
+```{r}
+confusionMatrix(predict(mdlTrain, validating), validating$classe)
+```
+## We got 0.99 accuracy. 
+
+#Expected out-of-sample error
+
+##The expected out-of-sample error is estimated at 0.005, or 0.5%. 
+##The expected out-of-sample error is calculated as 1 - accuracy for predictions made against the 
+##cross-validation set. Our Test data set comprises 20 cases. With an accuracy above 99% on our 
+##cross-validation data, we can expect that very few, or none, of the test samples will be missclassified.
+
+
+# Submission
+
+## Perform prediction
+```{r}
+predictSubmission <- predict(mdlTrain, test)
+predictSubmission
+```
